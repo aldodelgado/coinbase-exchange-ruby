@@ -21,11 +21,14 @@ module Coinbase
         end
 
         req.body = body
-
         req_ts = Time.now.utc.to_i.to_s
-        signature = Base64.encode64(
-          OpenSSL::HMAC.digest('sha256', Base64.decode64(@api_secret).strip,
-                               "#{req_ts}#{method}#{path}#{body}")).strip
+        what = "#{req_ts}#{method}#{path}#{body}"
+
+        # create a sha256 hmac with the secret
+        secret = Base64.decode64(@api_secret)
+        hash  = OpenSSL::HMAC.digest('sha256', secret, what)
+        signature = Base64.strict_encode64(hash)
+
         req['Content-Type'] = 'application/json'
         req['CB-ACCESS-TIMESTAMP'] = req_ts
         req['CB-ACCESS-PASSPHRASE'] = @api_pass
